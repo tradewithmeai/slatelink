@@ -1,0 +1,67 @@
+name: SlateLink CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.10", "3.11"]
+    
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Generate demo assets
+      run: |
+        python scripts/generate_demo_assets.py
+    
+    - name: Test diagnostics mode
+      run: |
+        python src/slatelink/app.py --diagnostics test_data/IMG_0001.jpg test_data/exampleFilmMetadata.csv
+    
+    - name: Run feature audit
+      run: |
+        python scripts/feature_audit.py
+    
+    - name: Verify test data created
+      run: |
+        python -c "
+        from pathlib import Path
+        assert (Path('test_data') / 'IMG_0001.jpg').exists(), 'IMG_0001.jpg not found'
+        assert (Path('test_data') / 'IMG_0002.jpg').exists(), 'IMG_0002.jpg not found' 
+        assert (Path('test_data') / 'IMG_0003.jpg').exists(), 'IMG_0003.jpg not found'
+        assert (Path('test_data') / 'exampleFilmMetadata.csv').exists(), 'CSV not found'
+        print('All test data files verified')
+        "
+        
+    # Optional: Check that app can import without GUI on headless systems
+    - name: Test headless import (Linux only)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        export QT_QPA_PLATFORM=offscreen
+        python -c "
+        import sys
+        sys.path.insert(0, 'src')
+        from slatelink.config.app_config import app_config
+        from slatelink.data.csv_loader import CSVLoader
+        from slatelink.export.xmp_writer import XMPWriter
+        print('Headless import successful')
+        print(f'free_placement={app_config.free_placement}')
+        "

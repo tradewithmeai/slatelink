@@ -1,0 +1,43 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<?xpacket begin='\ufeff' id='W5M0MpCehiHzreSzNTczkc9d'?>
+<x:xmpmeta xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:slx="http://solvx.uk/ns/slx/1.0/" xmlns:stRef="http://ns.adobe.com/xap/1.0/sType/ResourceRef#" xmlns:x="adobe:ns:meta/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:xmpMM="http://ns.adobe.com/xap/1.0/mm/">
+  <rdf:RDF>
+    <rdf:Description rdf:about="" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xmpMM="http://ns.adobe.com/xap/1.0/mm/" xmlns:stRef="http://ns.adobe.com/xap/1.0/sType/ResourceRef#" xmlns:iptc="http://iptc.org/std/Iptc4xmpCore/1.0/xmlns/" xmlns:slx="http://solvx.uk/ns/slx/1.0/">
+      <xmp:CreatorTool>SlateLink MVP 0.1</xmp:CreatorTool>
+      <xmp:CreateDate>2025-08-27T14:02:34Z</xmp:CreateDate>
+      <xmpMM:DerivedFrom>
+        <stRef:filePath>IMG_0003.jpg</stRef:filePath>
+        <stRef:documentID>sha256:d7d1dc91f079c3484c8e7746a86ab29a9e34b22d7366887232dcededf51d00d1</stRef:documentID>
+        <stRef:instanceID>499d47e8-4d1d-4495-b8a1-786ba6d92b6b</stRef:instanceID>
+      </xmpMM:DerivedFrom>
+      <slx:take>1</slx:take>
+      <slx:camera>B</slx:camera>
+      <slx:look>Rec2020</slx:look>
+      <slx:timecodeIn>01:24:00:00</slx:timecodeIn>
+      <slx:roll>A12</slx:roll>
+      <dc:title>
+        <rdf:Alt>
+          <rdf:li xml:lang="x-default">12C-T1</rdf:li>
+        </rdf:Alt>
+      </dc:title>
+      <slx:csvFileName>silverstack_metadata.csv</slx:csvFileName>
+      <slx:csvSHA256>sha256:ccd78da10a22966242bb9a12c93904423a420254b4b7144f556dc707ee445f17</slx:csvSHA256>
+      <slx:jpegSHA256>sha256:d7d1dc91f079c3484c8e7746a86ab29a9e34b22d7366887232dcededf51d00d1</slx:jpegSHA256>
+      <slx:joinKey>Filename</slx:joinKey>
+      <slx:fieldMap>{"Take": "take", "Camera": "camera", "Look": "look", "Timecode In": "timecodeIn", "Roll": "roll", "Slate": "slate"}</slx:fieldMap>
+      <slx:selectedFields>
+        <rdf:Bag>
+          <rdf:li>Take</rdf:li>
+          <rdf:li>Camera</rdf:li>
+          <rdf:li>Look</rdf:li>
+          <rdf:li>Timecode In</rdf:li>
+          <rdf:li>Roll</rdf:li>
+          <rdf:li>Slate</rdf:li>
+        </rdf:Bag>
+      </slx:selectedFields>
+      <slx:overlaySpec>{"anchor": "top_left", "font_pt": 16, "padding_px": 12, "line_spacing_px": 6, "box_opacity": 0.8, "show_background": true, "field_order": ["Take", "Camera", "Look", "Timecode In", "Roll", "Slate"], "overlay_positions": {}}</slx:overlaySpec>
+      <slx:fieldOrder>["Take", "Camera", "Look", "Timecode In", "Roll", "Slate"]</slx:fieldOrder>
+    </rdf:Description>
+  </rdf:RDF>
+</x:xmpmeta>
+<?xpacket end='w'?>

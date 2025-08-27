@@ -1,0 +1,42 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<?xpacket begin='\ufeff' id='W5M0MpCehiHzreSzNTczkc9d'?>
+<x:xmpmeta xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:slx="http://solvx.uk/ns/slx/1.0/" xmlns:stRef="http://ns.adobe.com/xap/1.0/sType/ResourceRef#" xmlns:x="adobe:ns:meta/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:xmpMM="http://ns.adobe.com/xap/1.0/mm/">
+  <rdf:RDF>
+    <rdf:Description rdf:about="" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xmpMM="http://ns.adobe.com/xap/1.0/mm/" xmlns:stRef="http://ns.adobe.com/xap/1.0/sType/ResourceRef#" xmlns:iptc="http://iptc.org/std/Iptc4xmpCore/1.0/xmlns/" xmlns:slx="http://solvx.uk/ns/slx/1.0/">
+      <xmp:CreatorTool>SlateLink MVP 0.1</xmp:CreatorTool>
+      <xmp:CreateDate>2025-08-27T16:35:48Z</xmp:CreateDate>
+      <xmpMM:DerivedFrom>
+        <stRef:filePath>IMG_0004.jpg</stRef:filePath>
+        <stRef:documentID>sha256:6a55303fa0f0ac1f2a024ca152a12d94d00bb55f65bbdd4be68946bc1443e1c4</stRef:documentID>
+        <stRef:instanceID>575a14a0-3315-4c75-a40b-093d93a19604</stRef:instanceID>
+      </xmpMM:DerivedFrom>
+      <slx:take>2</slx:take>
+      <dc:title>
+        <rdf:Alt>
+          <rdf:li xml:lang="x-default">12C-T2</rdf:li>
+        </rdf:Alt>
+      </dc:title>
+      <slx:timecodeStart>01:24:03:00</slx:timecodeStart>
+      <slx:roll>A12</slx:roll>
+      <slx:filename>IMG_0004.jpg</slx:filename>
+      <slx:csvFileName>silverstack_metadata.csv</slx:csvFileName>
+      <slx:csvSHA256>sha256:ccd78da10a22966242bb9a12c93904423a420254b4b7144f556dc707ee445f17</slx:csvSHA256>
+      <slx:jpegSHA256>sha256:6a55303fa0f0ac1f2a024ca152a12d94d00bb55f65bbdd4be68946bc1443e1c4</slx:jpegSHA256>
+      <slx:joinKey>Filename</slx:joinKey>
+      <slx:fieldMap>{"Take": "take", "Slate": "slate", "Timecode Start": "timecodeStart", "Roll": "roll", "Filename": "filename"}</slx:fieldMap>
+      <slx:selectedFields>
+        <rdf:Bag>
+          <rdf:li>Take</rdf:li>
+          <rdf:li>Slate</rdf:li>
+          <rdf:li>Timecode Start</rdf:li>
+          <rdf:li>Roll</rdf:li>
+          <rdf:li>Filename</rdf:li>
+        </rdf:Bag>
+      </slx:selectedFields>
+      <slx:overlaySpec>{"anchor": "top_right", "font_pt": 13, "padding_px": 12, "line_spacing_px": 6, "box_opacity": 0.8, "show_background": false, "field_order": ["Take", "Slate", "Timecode Start", "Roll", "Filename"], "overlay_positions": {"Camera": [0.1, 0.11], "Slate": [0.76, 0.25]}}</slx:overlaySpec>
+      <slx:fieldOrder>["Take", "Slate", "Timecode Start", "Roll", "Filename"]</slx:fieldOrder>
+      <slx:overlayPositions>{"Camera": [0.1, 0.11], "Slate": [0.76, 0.25]}</slx:overlayPositions>
+    </rdf:Description>
+  </rdf:RDF>
+</x:xmpmeta>
+<?xpacket end='w'?>

@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.pytest_cache/
+build/
+dist/
+*.spec
+*.log
+
+# Virtual environments
+.venv/
+env/
+venv/
+ENV/
+
+# IDE and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Generated files
+test_data/*.jpg
+test_data/*.csv
+audit/*.json
+audit/*.jsonl
+presets/*.json
+
+# PyInstaller
+*.manifest
+
+# Qt
+*.qm
+*.qmlc
+
+# Logs
+*.log
