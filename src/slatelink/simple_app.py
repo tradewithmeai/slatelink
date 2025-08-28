@@ -426,6 +426,8 @@ def main():
     parser.add_argument('--log-level', default='INFO',
                        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
                        help='Set logging level (default: INFO)')
+    parser.add_argument('--enable-saliency', action='store_true',
+                       help='Enable saliency-aware overlay placement (may cause crashes on some systems)')
     
     args = parser.parse_args()
     
@@ -433,6 +435,12 @@ def main():
     from .debug.logger import debug_logger, setup_exception_handler
     debug_logger.initialize(debug_mode=args.debug, log_level=args.log_level)
     setup_exception_handler()
+    
+    # Apply saliency setting if enabled
+    if args.enable_saliency:
+        from .config.app_config import app_config
+        app_config.saliency_placement = True
+        debug_logger.info("Saliency processing enabled via --enable-saliency flag")
     
     debug_logger.info("Starting SlateLink Simple")
     

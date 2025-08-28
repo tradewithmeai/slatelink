@@ -40,19 +40,29 @@ class SaliencyDetector:
         return best_corner, needs_backdrop
     
     def _scale_for_analysis(self, pixmap: QPixmap) -> QPixmap:
-        """Scale image to ~256px width for analysis."""
+        """Scale image to ~256px width for analysis with size limits."""
         target_width = 256
         
+        # Don't scale if already small enough
         if pixmap.width() <= target_width:
             return pixmap
         
-        aspect_ratio = pixmap.height() / pixmap.width()
+        # For very large images (like 1920x1080), scale more aggressively
+        current_width = pixmap.width()
+        current_height = pixmap.height()
+        
+        # Limit processing for performance and memory safety
+        if current_width > 2048 or current_height > 2048:
+            target_width = 128  # More aggressive scaling for large images
+        
+        aspect_ratio = current_height / current_width
         target_height = int(target_width * aspect_ratio)
         
-        return pixmap.scaled(target_width, target_height, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        # Use faster scaling for analysis (FastTransformation)
+        return pixmap.scaled(target_width, target_height, Qt.KeepAspectRatio, Qt.FastTransformation)
     
     def _pixmap_to_array(self, pixmap: QPixmap) -> np.ndarray:
-        """Convert QPixmap to numpy array."""
+        """Convert QPixmap to numpy array with Mac-safe buffer handling."""
         try:
             # Convert to QImage
             image = pixmap.toImage()
@@ -67,21 +77,66 @@ class SaliencyDetector:
             height = image.height()
             bytes_per_line = image.bytesPerLine()
             
-            # Convert to numpy array
+            # Validate dimensions to prevent memory issues
+            if width * height > 4096 * 4096:  # Limit to ~67MP for safety
+                return None
+            
+            # Convert to numpy array with Mac-safe buffer handling
             buffer = image.constBits()
-            if hasattr(buffer, 'tobytes'):
-                # PySide6 newer versions
-                img_array = np.frombuffer(buffer.tobytes(), dtype=np.uint8)
-            else:
-                # Fallback for older versions
-                img_array = np.frombuffer(bytes(buffer), dtype=np.uint8)
+            img_array = None
             
-            # Reshape to (height, width, 3)
-            img_array = img_array.reshape((height, bytes_per_line // 3, 3))[:, :width, :]
+            # Try multiple buffer conversion methods (Mac compatibility)
+            try:
+                # Method 1: Modern PySide6 with tobytes()
+                if hasattr(buffer, 'tobytes'):
+                    buffer_data = buffer.tobytes()
+                    img_array = np.frombuffer(buffer_data, dtype=np.uint8)
+            except (AttributeError, TypeError, RuntimeError) as e:
+                pass  # Try next method
             
-            return img_array
+            if img_array is None:
+                try:
+                    # Method 2: Legacy bytes() conversion
+                    buffer_data = bytes(buffer)
+                    img_array = np.frombuffer(buffer_data, dtype=np.uint8)
+                except (TypeError, RuntimeError, MemoryError) as e:
+                    pass  # Try next method
             
-        except Exception:
+            if img_array is None:
+                try:
+                    # Method 3: Manual byte extraction (Mac fallback)
+                    buffer_size = bytes_per_line * height
+                    buffer_data = bytearray(buffer_size)
+                    for i in range(buffer_size):
+                        buffer_data[i] = buffer[i]
+                    img_array = np.frombuffer(buffer_data, dtype=np.uint8)
+                except (IndexError, RuntimeError, MemoryError) as e:
+                    return None  # All methods failed
+            
+            if img_array is None:
+                return None
+            
+            # Validate expected size
+            expected_size = bytes_per_line * height
+            if len(img_array) != expected_size:
+                return None
+            
+            # Reshape to (height, width, 3) with bounds checking
+            try:
+                img_array = img_array.reshape((height, bytes_per_line // 3, 3))[:, :width, :]
+                
+                # Final validation
+                if img_array.shape != (height, width, 3):
+                    return None
+                    
+                return img_array
+            except (ValueError, IndexError) as e:
+                return None
+            
+        except Exception as e:
+            # Log the specific error for debugging
+            import sys
+            print(f"Saliency conversion error: {type(e).__name__}: {e}", file=sys.stderr)
             return None
     
     def _extract_corner_region(self, image_array: np.ndarray, corner: str) -> np.ndarray:

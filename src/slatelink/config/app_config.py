@@ -15,7 +15,7 @@ class AppConfig:
 
     # Feature flags
     slate_bar: bool = True
-    saliency_placement: bool = True
+    saliency_placement: bool = False  # Disabled by default to prevent Mac crashes with 1920x1080 images
     field_reorder: bool = True          # enable drag-to-reorder list
     free_placement: bool = False        # DISABLED: per-field on-image placement (L toggle)
 
