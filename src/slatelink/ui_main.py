@@ -361,6 +361,11 @@ class MainWindow(QMainWindow):
         self.export_btn.setEnabled(False)
         export_layout.addWidget(self.export_btn)
         
+        self.export_jpeg_btn = QPushButton("Export JPEG with Overlay")
+        self.export_jpeg_btn.clicked.connect(self.export_jpeg_overlay)
+        self.export_jpeg_btn.setEnabled(False)
+        export_layout.addWidget(self.export_jpeg_btn)
+        
         export_group.setLayout(export_layout)
         layout.addWidget(export_group)
         
@@ -546,9 +551,11 @@ class MainWindow(QMainWindow):
         # Update the widget positions without recreating them
         self._update_widget_positions()
         
-        # Update overlay and export button
+        # Update overlay and export buttons
         self.update_overlay()
-        self.export_btn.setEnabled(bool(self.selected_fields))
+        has_fields = bool(self.selected_fields)
+        self.export_btn.setEnabled(has_fields)
+        self.export_jpeg_btn.setEnabled(has_fields and bool(self.current_image_path))
     
     def _move_field_to_selected_section(self, field: str):
         """Move field to the selected section (top of the list)."""
@@ -1047,6 +1054,74 @@ class MainWindow(QMainWindow):
             
         except Exception as e:
             QMessageBox.critical(self, "Export Error", f"Failed to export XMP: {e}")
+    
+    @log_exceptions
+    def export_jpeg_overlay(self):
+        """Export JPEG with overlay burned in."""
+        if not self.current_image_path or not self.current_row or not self.selected_fields:
+            QMessageBox.warning(self, "Export Error", 
+                              "Missing image, CSV match, or selected fields")
+            return
+        
+        # Choose output location
+        suggested_name = f"{self.current_image_path.stem}_overlay{self.current_image_path.suffix}"
+        output_path, _ = QFileDialog.getSaveFileName(
+            self, "Save JPEG with Overlay", suggested_name,
+            "JPEG Images (*.jpg *.jpeg);;All Files (*)"
+        )
+        
+        if not output_path:
+            return
+        
+        try:
+            debug_logger.info(f"Exporting JPEG with overlay to: {output_path}")
+            
+            # Load full-resolution image
+            pixmap = QPixmap(str(self.current_image_path))
+            if pixmap.isNull():
+                raise Exception("Could not load source image")
+            
+            # Create overlay spec from current settings
+            overlay_spec = OverlaySpec(
+                fields=self.selected_fields.copy(),
+                slate_bar=True,  # Use slate bar for production
+                positions=self.position_manager.get_current_positions()
+            )
+            
+            # Apply current display settings
+            overlay_spec.anchor = self.anchor_combo.currentText()
+            overlay_spec.font_pt = self.font_spin.value()
+            overlay_spec.show_background = self.bg_check.isChecked()
+            
+            # Render overlay at full resolution
+            overlay_pixmap = self.renderer.render_overlay(
+                pixmap, self.current_row, overlay_spec
+            )
+            
+            # Save as JPEG
+            if overlay_pixmap.save(output_path, "JPEG", quality=95):
+                QMessageBox.information(
+                    self, "Export Complete", 
+                    f"JPEG with overlay saved to:\n{output_path}"
+                )
+                debug_logger.info(f"JPEG export successful: {output_path}")
+                
+                # Log the export operation
+                self.audit_logger.log_export(
+                    str(self.current_image_path),
+                    str(output_path),
+                    self.selected_fields,
+                    export_type="jpeg_overlay"
+                )
+            else:
+                raise Exception("Failed to save JPEG file")
+                
+        except Exception as e:
+            debug_logger.error("JPEG export failed", exception=e)
+            QMessageBox.critical(
+                self, "Export Error", 
+                f"Failed to export JPEG with overlay:\n{e}"
+            )
     
     def select_batch_folder(self):
         """Select folder for batch operations."""
