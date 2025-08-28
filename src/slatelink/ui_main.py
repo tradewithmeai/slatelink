@@ -401,15 +401,67 @@ class MainWindow(QMainWindow):
         
         self.current_image_path = Path(file_path)
         
-        # Load and display image
+        # Enhanced debugging for image loading
+        print(f"\n{'='*60}")
+        print(f"[IMAGE LOAD] Attempting to load: {self.current_image_path}")
+        print(f"[IMAGE LOAD] File exists: {self.current_image_path.exists()}")
+        print(f"[IMAGE LOAD] File size: {self.current_image_path.stat().st_size if self.current_image_path.exists() else 'N/A'} bytes")
+        print(f"[IMAGE LOAD] File suffix: {self.current_image_path.suffix}")
+        print(f"[IMAGE LOAD] Absolute path: {self.current_image_path.absolute()}")
+        
+        # Try to get image info with Pillow for debugging
+        try:
+            from PIL import Image
+            with Image.open(str(self.current_image_path)) as img:
+                print(f"[PIL INFO] Format: {img.format}")
+                print(f"[PIL INFO] Mode: {img.mode}")
+                print(f"[PIL INFO] Size: {img.size}")
+                print(f"[PIL INFO] Info: {img.info}")
+        except Exception as e:
+            print(f"[PIL ERROR] Failed to read with Pillow: {type(e).__name__}: {e}")
+        
+        # Load and display image with Qt
+        print(f"[QT LOAD] Creating QPixmap from: {str(self.current_image_path)}")
         pixmap = QPixmap(str(self.current_image_path))
+        
         if pixmap.isNull():
-            QMessageBox.warning(self, "Error", "Failed to load image")
-            return
+            # More detailed error information
+            print(f"[QT ERROR] QPixmap.isNull() = True")
+            print(f"[QT ERROR] Failed to create QPixmap from image")
+            
+            # Try alternative loading methods
+            print(f"[QT DEBUG] Trying QImage first...")
+            from PySide6.QtGui import QImage
+            qimage = QImage(str(self.current_image_path))
+            if qimage.isNull():
+                print(f"[QT ERROR] QImage also failed to load")
+            else:
+                print(f"[QT INFO] QImage loaded successfully: {qimage.size()}")
+                pixmap = QPixmap.fromImage(qimage)
+                if not pixmap.isNull():
+                    print(f"[QT SUCCESS] Converted QImage to QPixmap successfully")
+            
+            # Check Qt's supported formats
+            from PySide6.QtGui import QImageReader
+            print(f"[QT FORMATS] Supported image formats: {[bytes(fmt).decode() for fmt in QImageReader.supportedImageFormats()]}")
+            
+            # If still null, show error and return
+            if pixmap.isNull():
+                error_msg = f"Failed to load image: {self.current_image_path.name}"
+                print(f"[FINAL ERROR] {error_msg}")
+                print(f"{'='*60}\n")
+                QMessageBox.warning(self, "Error", error_msg)
+                return
+        else:
+            print(f"[QT SUCCESS] QPixmap loaded: size={pixmap.size()}, depth={pixmap.depth()}")
+            print(f"{'='*60}\n")
         
         # Scale to fit
+        print(f"[DISPLAY] Scaling pixmap from {pixmap.size()} to fit label size {self.image_label.size()}")
         scaled = pixmap.scaled(self.image_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        print(f"[DISPLAY] Scaled size: {scaled.size()}")
         self.image_label.setPixmap(scaled)
+        print(f"[DISPLAY] Image successfully displayed")
         
         # Reset hash status
         self.hash_verified = False
@@ -417,10 +469,13 @@ class MainWindow(QMainWindow):
         self.encoding_used_fallback = False
         
         # Auto-find CSV
+        print(f"[AUTO CSV] Looking for CSV files near image...")
         self.current_csv_path = self.csv_loader.auto_find_csv(self.current_image_path)
         if self.current_csv_path:
+            print(f"[AUTO CSV] Found CSV: {self.current_csv_path}")
             self.load_csv(self.current_csv_path)
         else:
+            print(f"[AUTO CSV] No CSV found, clearing fields")
             self.clear_fields()
             # Still start hash computation for image only
             self.start_hash_computation()
@@ -438,9 +493,15 @@ class MainWindow(QMainWindow):
     
     def load_csv(self, csv_path: Path):
         """Load and parse CSV file."""
+        print(f"\n[CSV LOAD] Loading CSV: {csv_path}")
+        print(f"[CSV LOAD] File exists: {csv_path.exists()}")
+        print(f"[CSV LOAD] File size: {csv_path.stat().st_size if csv_path.exists() else 'N/A'} bytes")
+        
         try:
             self.csv_headers, self.csv_rows = self.csv_loader.parse_csv(csv_path)
             self.original_csv_headers = self.csv_headers.copy()  # Store original order
+            print(f"[CSV LOAD] Successfully loaded {len(self.csv_rows)} rows with {len(self.csv_headers)} columns")
+            print(f"[CSV LOAD] Headers: {self.csv_headers[:5]}..." if len(self.csv_headers) > 5 else f"[CSV LOAD] Headers: {self.csv_headers}")
             
             # Update encoding indicator and track fallback
             encoding_info = self.csv_loader.get_encoding_info()
@@ -493,10 +554,16 @@ class MainWindow(QMainWindow):
             
             # Start background hash computation
             if self.current_image_path:
+                print(f"[CSV LOAD] Starting hash computation and matching image")
                 self.start_hash_computation()
                 self.match_current_image()
             
+            print(f"[CSV LOAD] CSV loading complete\n")
+            
         except Exception as e:
+            print(f"[CSV ERROR] Failed to load CSV: {type(e).__name__}: {e}")
+            import traceback
+            print(f"[CSV ERROR] Traceback:\n{traceback.format_exc()}")
             QMessageBox.warning(self, "CSV Error", f"Failed to load CSV: {e}")
     
     def populate_fields(self):
@@ -679,7 +746,12 @@ class MainWindow(QMainWindow):
     def match_current_image(self):
         """Match current image to CSV row."""
         if not self.current_image_path or not self.csv_rows:
+            print(f"[MATCH] Cannot match - image path: {bool(self.current_image_path)}, CSV rows: {len(self.csv_rows) if self.csv_rows else 0}")
             return
+        
+        print(f"\n[MATCH] Matching image: {self.current_image_path.name}")
+        print(f"[MATCH] Using join key: {self.match_config.join_key}")
+        print(f"[MATCH] Fallback keys: {self.match_config.fallback_keys}")
         
         # Try exact matching first
         row_index = self.matcher.match_row(
@@ -688,6 +760,7 @@ class MainWindow(QMainWindow):
             self.match_config.join_key,
             self.match_config.fallback_keys
         )
+        print(f"[MATCH] Exact match result: {'Found' if row_index is not None else 'Not found'} (index: {row_index})")
         
         # Track if fallback was used
         self.match_used_fallback = self.matcher.last_match_ambiguous
@@ -696,6 +769,7 @@ class MainWindow(QMainWindow):
         
         # If exact matching fails, try fuzzy matching
         if row_index is None:
+            print(f"[FUZZY] Exact match failed, trying fuzzy matching...")
             debug_logger.info(f"Exact match failed for {self.current_image_path.name}, trying fuzzy matching")
             fuzzy_matches = self.fuzzy_matcher.match_row_fuzzy(
                 self.current_image_path,
@@ -708,12 +782,16 @@ class MainWindow(QMainWindow):
                 row_index = fuzzy_matches[0][0]  # Best match index
                 self.match_confidence = fuzzy_matches[0][1]  # Confidence score
                 self.fuzzy_match_used = True
+                print(f"[FUZZY] Match found: row {row_index}, confidence {self.match_confidence:.2f}")
+                print(f"[FUZZY] Matched value: {self.csv_rows[row_index].get(self.match_config.join_key, 'N/A')}")
                 debug_logger.info(f"Fuzzy match found: row {row_index}, confidence {self.match_confidence:.2f}")
             else:
+                print(f"[FUZZY] No fuzzy match found")
                 debug_logger.warning(f"No fuzzy match found for {self.current_image_path.name}")
         
         if row_index is not None:
             if self.matcher.last_match_ambiguous:
+                print(f"[MATCH] Multiple matches found, showing picker dialog")
                 # Multiple matches - show picker for Silverstack mode
                 matches = self.matcher.get_multiple_matches(
                     self.current_image_path, self.csv_rows, self.match_config.join_key)
@@ -722,14 +800,20 @@ class MainWindow(QMainWindow):
                 if dialog.exec():
                     self.current_row = self.csv_rows[matches[dialog.selected_index]]
                     self.match_used_fallback = False  # User selected, no longer ambiguous
+                    print(f"[MATCH] User selected row {matches[dialog.selected_index]}")
                 else:
                     self.current_row = None
+                    print(f"[MATCH] User cancelled row selection")
                     self.update_status_bar()
                     return
             else:
                 self.current_row = self.csv_rows[row_index]
+                print(f"[MATCH] Successfully matched to row {row_index}")
+                if self.current_row:
+                    print(f"[MATCH] Row data sample: {list(self.current_row.items())[:3]}...")
         else:
             self.current_row = None
+            print(f"[MATCH] No match found\n")
         
         self.update_status_bar()
         self.update_overlay()
