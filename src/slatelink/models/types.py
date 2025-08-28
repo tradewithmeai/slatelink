@@ -167,7 +167,11 @@ class PrecedenceInfo:
     position_source: Literal['per-image', 'preset', 'auto'] = 'auto'
     tc_source: Literal['Start', 'End', 'none'] = 'none'
     match_type: str = 'unknown'
+    match_confidence: Optional[float] = None
     
     def format_status(self) -> str:
         """Format as single status line."""
-        return f"Order: {self.order_source} · Positions: {self.position_source} · TC: {self.tc_source} · Match: {self.match_type}"
+        match_info = self.match_type
+        if self.match_confidence is not None and self.match_confidence < 1.0:
+            match_info += f" ({self.match_confidence:.0%})"
+        return f"Order: {self.order_source} · Positions: {self.position_source} · TC: {self.tc_source} · Match: {match_info}"

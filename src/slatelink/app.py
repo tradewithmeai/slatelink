@@ -11,6 +11,7 @@ import argparse
 from pathlib import Path
 from PySide6.QtWidgets import QApplication
 from .ui_main import MainWindow
+from .debug.logger import debug_logger, setup_exception_handler
 
 
 def run_diagnostics(image_path: str = None, csv_path: str = None):
@@ -103,8 +104,22 @@ def main():
     parser = argparse.ArgumentParser(description='SlateLink 0.2.0 - XMP Sidecar Generator')
     parser.add_argument('--diagnostics', nargs='*', 
                        help='Run diagnostics mode. Usage: --diagnostics [image_path] [csv_path]')
+    parser.add_argument('--debug', action='store_true',
+                       help='Enable debug mode with verbose logging')
+    parser.add_argument('--log-level', default='INFO',
+                       choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+                       help='Set logging level (default: INFO)')
     
     args = parser.parse_args()
+    
+    # Initialize debug logging
+    debug_logger.initialize(debug_mode=args.debug, log_level=args.log_level)
+    
+    # Setup global exception handler
+    setup_exception_handler()
+    
+    # Log startup
+    debug_logger.info("SlateLink starting", debug_mode=args.debug, log_level=args.log_level)
     
     # Handle diagnostics mode
     if args.diagnostics is not None:
@@ -119,8 +134,15 @@ def main():
     app.setOrganizationName("SlateLink")
     
     # Create and show main window
-    window = MainWindow()
-    window.show()
+    try:
+        debug_logger.info("Creating main window")
+        window = MainWindow()
+        window.debug_mode = args.debug
+        debug_logger.info("Showing main window")
+        window.show()
+    except Exception as e:
+        debug_logger.critical("Failed to create main window", exception=e)
+        sys.exit(1)
     
     # Run event loop
     sys.exit(app.exec())

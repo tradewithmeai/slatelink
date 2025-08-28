@@ -10,6 +10,7 @@ from typing import Optional, List, Dict
 
 from .data.csv_loader import CSVLoader
 from .data.matcher import Matcher, RowPickerDialog
+from .data.fuzzy_matcher import FuzzyMatcher
 from .overlay.renderer import OverlayRenderer
 from .export.xmp_writer import XMPWriter
 from .export.hash_utils import compute_hashes_async, validate_files_unchanged, hash_status
@@ -18,6 +19,7 @@ from .audit.logger import AuditLogger
 from .models.types import Preset, OverlaySpec, MatchConfig, ExportConfig, BatchConfig, PrecedenceInfo
 from .config.app_config import app_config
 from .overlay.position_manager import PositionManager
+from .debug.logger import debug_logger, log_exceptions
 
 
 class FieldWidget(QFrame):
@@ -97,12 +99,15 @@ class FieldWidget(QFrame):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.debug_mode = False  # Will be set by app.py
+        debug_logger.info("Initializing MainWindow")
         self.setWindowTitle('SlateLink - XMP Sidecar MVP')
         self.setGeometry(100, 100, 1200, 800)
         
         # Initialize components
         self.csv_loader = CSVLoader()
         self.matcher = Matcher()
+        self.fuzzy_matcher = FuzzyMatcher(min_confidence=0.6)
         self.renderer = OverlayRenderer()
         self.xmp_writer = XMPWriter()
         self.preset_manager = PresetManager()
@@ -669,7 +674,7 @@ class MainWindow(QMainWindow):
         if not self.current_image_path or not self.csv_rows:
             return
         
-        # Try matching with fallback detection
+        # Try exact matching first
         row_index = self.matcher.match_row(
             self.current_image_path, 
             self.csv_rows,
@@ -679,6 +684,26 @@ class MainWindow(QMainWindow):
         
         # Track if fallback was used
         self.match_used_fallback = self.matcher.last_match_ambiguous
+        self.fuzzy_match_used = False
+        self.match_confidence = 1.0
+        
+        # If exact matching fails, try fuzzy matching
+        if row_index is None:
+            debug_logger.info(f"Exact match failed for {self.current_image_path.name}, trying fuzzy matching")
+            fuzzy_matches = self.fuzzy_matcher.match_row_fuzzy(
+                self.current_image_path,
+                self.csv_rows,
+                self.match_config.join_key,
+                self.match_config.fallback_keys
+            )
+            
+            if fuzzy_matches:
+                row_index = fuzzy_matches[0][0]  # Best match index
+                self.match_confidence = fuzzy_matches[0][1]  # Confidence score
+                self.fuzzy_match_used = True
+                debug_logger.info(f"Fuzzy match found: row {row_index}, confidence {self.match_confidence:.2f}")
+            else:
+                debug_logger.warning(f"No fuzzy match found for {self.current_image_path.name}")
         
         if row_index is not None:
             if self.matcher.last_match_ambiguous:
@@ -702,9 +727,17 @@ class MainWindow(QMainWindow):
         self.update_status_bar()
         self.update_overlay()
     
+    @log_exceptions
     def update_overlay(self):
         """Update the image overlay."""
         if not self.current_image_path:
+            debug_logger.debug("No image loaded, skipping overlay update")
+            return
+        
+        # Add safety check for missing CSV data
+        if not self.csv_rows and self.selected_fields:
+            debug_logger.warning("Selected fields but no CSV rows, clearing overlay")
+            self.selected_fields = []
             return
         
         # Load original image
@@ -789,16 +822,29 @@ class MainWindow(QMainWindow):
     
     def clear_fields(self):
         """Clear field checkboxes."""
-        while self.fields_layout.count():
-            item = self.fields_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-        
-        self.csv_headers = []
-        self.original_csv_headers = []
-        self.csv_rows = []
-        self.current_row = None
-        self.selected_fields = []
+        try:
+            debug_logger.debug("Clearing fields")
+            while self.fields_layout.count():
+                item = self.fields_layout.takeAt(0)
+                if item.widget():
+                    item.widget().deleteLater()
+            
+            self.csv_headers = []
+            self.original_csv_headers = []
+            self.csv_rows = []
+            self.current_row = None
+            self.selected_fields = []
+            self.field_checkboxes = {}
+            self.field_widgets = {}
+            
+            # Clear overlay if no CSV data
+            if self.current_image_path and hasattr(self, 'image_label'):
+                pixmap = QPixmap(str(self.current_image_path))
+                if not pixmap.isNull():
+                    scaled = pixmap.scaled(self.image_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                    self.image_label.setPixmap(scaled)
+        except Exception as e:
+            debug_logger.error("Error clearing fields", exception=e)
     
     def start_hash_computation(self):
         """Start background hash computation."""
@@ -823,8 +869,13 @@ class MainWindow(QMainWindow):
             self.status_label.setText("No image loaded")
             return
         
-        # Update precedence info
-        self.precedence_info.match_type = f"{self.match_config.join_key} ({'exact' if not self.match_used_fallback else 'fallback'})"
+        # Update precedence info with fuzzy matching
+        if getattr(self, 'fuzzy_match_used', False):
+            self.precedence_info.match_type = f"{self.match_config.join_key} (fuzzy)"
+            self.precedence_info.match_confidence = getattr(self, 'match_confidence', None)
+        else:
+            self.precedence_info.match_type = f"{self.match_config.join_key} ({'exact' if not self.match_used_fallback else 'fallback'})"
+            self.precedence_info.match_confidence = None
         
         # Check for validation issues
         if not self.csv_validation['valid']:
