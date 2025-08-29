@@ -256,6 +256,47 @@ alex-app/
 - Added version tracking in package `__init__.py`
 - Maintained backward compatibility in XMP schema
 
+### 5. Mac-Specific Image Loading Issues (1920x1080)
+**Problem**: Mac systems experiencing crashes when loading 1920x1080 JPEG images
+- Saliency detection using NumPy buffer operations caused crashes
+- PySide6 QPixmap buffer conversion incompatibility on macOS
+- Memory-intensive processing (6.2MB raw data per 1920x1080 image)
+- Buffer.tobytes() method failing on Mac Qt implementations
+
+**Resolution**: Multi-layered fix approach
+- Disabled saliency detection by default (`saliency_placement = False`)
+- Implemented Mac-safe buffer handling with 3 fallback methods
+- Added --enable-saliency flag for optional re-enabling
+- Optimized image scaling (128px for large images, FastTransformation)
+- Added memory limits (4096x4096 max for safety)
+
+### 6. Simplified SlateLink Version for Production Use
+**Problem**: Need for ultra-reliable on-set tool without potential crash points
+- Complex features increasing failure surface area
+- Auto-loading causing unexpected crashes
+- Need for immediate JPEG output with overlays
+
+**Resolution**: Created simple_slatelink.py
+- Manual file selection only (no auto-loading)
+- Direct JPEG export with burned-in overlays
+- Removed all non-essential features
+- Comprehensive error handling and debug output
+- Maintained fuzzy matching for production file naming
+
+### 7. Comprehensive Debugging System
+**Problem**: Unable to diagnose Mac-specific failures without detailed information
+- Simple error dialogs insufficient for troubleshooting
+- No visibility into image format support or loading process
+- CSV matching failures hard to debug
+
+**Resolution**: Added extensive terminal debugging
+- Detailed image loading diagnostics (PIL and Qt info)
+- File existence, size, format, and path validation
+- CSV loading and row matching output
+- Exact vs fuzzy matching with confidence scores
+- Qt supported formats listing on failures
+- Alternative loading method attempts with fallbacks
+
 ---
 
 ## Final Status: ✅ PRODUCTION READY & DEPLOYED
@@ -263,7 +304,7 @@ alex-app/
 SlateLink 0.2.0 successfully delivers a professional-grade, cross-platform XMP sidecar tool with complete GitHub deployment and CI/CD pipeline.
 
 **Deployed to**: https://github.com/tradewithmeai/slatelink
-**Status**: Production-ready with comprehensive testing
+**Status**: Production-ready with comprehensive testing and Mac compatibility fixes
 **Features**: Zero-mutation data integrity, standards-compliant XMP, cross-platform compatibility
 
 ### Deployment Features
@@ -273,6 +314,9 @@ SlateLink 0.2.0 successfully delivers a professional-grade, cross-platform XMP s
 - ✅ **Headless Diagnostics**: Automated validation without GUI requirements
 - ✅ **Feature Audit System**: Runtime introspection and validation reporting
 - ✅ **Clean Package Structure**: Professional Python package layout
+- ✅ **Mac Compatibility**: Saliency disabled by default, safe buffer handling
+- ✅ **Simplified Version**: Ultra-reliable simple_slatelink.py for production
+- ✅ **Debug System**: Comprehensive terminal output for troubleshooting
 
 ### Ready for Production
 - **Professional Workflows**: DIT/editorial metadata processing
@@ -280,5 +324,12 @@ SlateLink 0.2.0 successfully delivers a professional-grade, cross-platform XMP s
 - **Standards Compliance**: Adobe XMP/RDF specification adherence
 - **Data Integrity**: SHA-256 validation with zero-mutation guarantee
 - **Automated Testing**: CI pipeline ensures quality across platforms
+- **Mac Reliability**: Fixed 1920x1080 image crashes with safe defaults
+- **Production Tool**: Simplified version for critical on-set work
+
+### Latest Improvements (Post-Deployment)
+- **Commit ac02383**: Fix Mac crashes with 1920x1080 images - disable saliency by default
+- **Commit 18e4aef**: Add simplified SlateLink version for reliable on-set use
+- **Commit 6069b69**: Add comprehensive debugging system and fuzzy file matching
 
 **Next Phase**: User testing and feedback collection from production workflows.
